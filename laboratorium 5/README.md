@@ -19,9 +19,9 @@ aplikacji:
 CONTAINER ID   IMAGE        COMMAND                  CREATED         STATUS                   PORTS                                     NAMES
 7b0f0667383c   goip-nginx   "/docker-entrypoint.…"   3 minutes ago   Up 3 minutes (healthy)   0.0.0.0:8080->80/tcp, [::]:8080->80/tcp   funny_morse
 
-`docker inspect funny_morse --format='{{.State.Health}}'`
+`docker inspect --format='{{.State.Health.Status}}' funny_morse`
 
-{healthy 0 [0x3b9ecd918910 0x3b9ecd918960 0x3b9ecd9189b0 0x3b9ecd918a00 0x3b9ecd918a50]}
+healthy
 
 #### Aplikacja realizuje wymaganą funkcjonalność:
 
