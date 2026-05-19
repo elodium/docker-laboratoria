@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+        <title>
+            {% if weather %}{{ weather.city }} Weather{% else %}Weather{%
+            endif %}
+        </title>
+
+        <script src="https://cdn.tailwindcss.com"></script>
+
+        <!-- Google Fonts -->
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap"
+            rel="stylesheet"
+        />
+
+        <script>
+            tailwind.config = {
+                theme: {
+                    extend: {
+                        fontFamily: {
+                            mono: ['"DM Mono"', "monospace"],
+                            sans: ['"DM Sans"', "sans-serif"],
+                        },
+                        colors: {
+                            ink: "#0f0f0f" /* near-black primary text and header background */,
+                            mist: "#f5f4f0" /* warm off-white page background */,
+                            slate: "#6b7280" /* mid-grey secondary labels */,
+                            line: "#e2e0d9" /* warm light-grey borders and dividers */,
+                        },
+                        animation: {
+                            "fade-up": "fadeUp 0.5s ease both",
+                            "fade-in": "fadeIn 0.4s ease both",
+                        },
+                        keyframes: {
+                            fadeUp: {
+                                "0%": {
+                                    opacity: 0,
+                                    transform: "translateY(12px)",
+                                },
+                                "100%": {
+                                    opacity: 1,
+                                    transform: "translateY(0)",
+                                },
+                            },
+                            fadeIn: {
+                                "0%": { opacity: 0 },
+                                "100%": { opacity: 1 },
+                            },
+                        },
+                    },
+                },
+            };
+        </script>
+
+        <style>
+            /* Page background using the custom 'mist' colour token */
+            body {
+                background-color: #f5f4f0;
+            }
+
+            /* Shared border style for every cell in the stats grid */
+            .stat-box {
+                border: 1px solid #e2e0d9;
+            }
+
+            /* Remove default browser focus ring; replace with a dark border */
+            .input-field:focus {
+                outline: none;
+                border-color: #0f0f0f;
+            }
+        </style>
+    </head>
+
+    <body
+        class="font-sans text-ink min-h-screen flex flex-col items-center justify-center px-4 py-16"
+    >
+        <!-- App header -->
+        <header class="mb-12 text-center animate-fade-up">
+            <p
+                class="font-mono text-xs tracking-[0.3em] text-slate uppercase mb-3"
+            >
+                Real-time forecast
+            </p>
+            <h1 class="text-4xl font-light tracking-tight">Weather</h1>
+        </header>
+
+        <!--Search form -->
+        <form
+            method="POST"
+            action="/weather"
+            class="w-full max-w-md mb-10 animate-fade-up"
+            style="animation-delay: 0.05s"
+        >
+            <div class="flex flex-col gap-3">
+                <div class="flex gap-3">
+                    <input
+                        class="input-field flex-1 bg-white border border-line rounded-none px-4 py-3 font-mono text-sm placeholder-slate transition-colors duration-200"
+                        type="text"
+                        name="city"
+                        placeholder="City"
+                        value="{{ city or '' }}"
+                        required
+                        autocomplete="off"
+                    />
+
+                    <input
+                        class="input-field w-36 bg-white border border-line rounded-none px-4 py-3 font-mono text-sm placeholder-slate transition-colors duration-200"
+                        type="text"
+                        name="country"
+                        placeholder="Country"
+                        value="{{ country or '' }}"
+                        required
+                        autocomplete="off"
+                    />
+                </div>
+
+                <button
+                    type="submit"
+                    class="bg-ink text-mist font-mono text-xs tracking-[0.2em] uppercase py-3 px-6 hover:bg-slate transition-colors duration-200"
+                >
+                    Get Weather →
+                </button>
+            </div>
+        </form>
+
+        <!-- Error banner -->
+        <!-- Only rendered when the backend sets the 'error'' context variable -->
+        {% if error %}
+        <div
+            class="w-full max-w-md mb-8 border border-red-200 bg-red-50 px-5 py-4 animate-fade-in"
+        >
+            <p class="font-mono text-xs text-red-600">⚠ {{ error }}</p>
+        </div>
+        {% endif %}
+
+        <!-- Weather card -->
+        <!-- Only rendered when geocoding + API fetch succeeded -->
+        {% if weather %}
+        <div
+            class="w-full max-w-md animate-fade-up"
+            style="animation-delay: 0.1s"
+        >
+            <!-- Basic info: location, temperature, condition -->
+            <div class="bg-ink text-mist px-6 py-8 mb-px">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <!-- Country label above city name -->
+                        <p
+                            class="font-mono text-xs tracking-[0.25em] text-slate uppercase mb-1"
+                        >
+                            {{ weather.country }}
+                        </p>
+                        <h2 class="text-3xl font-light tracking-tight mb-4">
+                            {{ weather.city }}
+                        </h2>
+
+                        <!-- Temperature block: large reading + feels-like + condition label -->
+                        <div class="flex items-baseline gap-3">
+                            <span class="text-6xl font-light"
+                                >{{ weather.temp }}°</span
+                            >
+                            <div>
+                                <p class="font-mono text-xs text-slate">
+                                    Feels {{ weather.feels_like }}°C
+                                </p>
+                                <p class="font-sans text-sm text-mist/70 mt-1">
+                                    {{ weather.condition }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <span
+                        class="text-5xl select-none"
+                        title="{{ weather.condition }}"
+                        >{{ weather.emoji }}</span
+                    >
+                </div>
+            </div>
+
+            <!-- Secondary stats: 3-column grid of supplementary metrics -->
+            <div class="grid grid-cols-3 bg-white">
+                <div class="stat-box px-4 py-5 text-center">
+                    <p
+                        class="font-mono text-xs text-slate uppercase tracking-widest mb-1"
+                    >
+                        Humidity
+                    </p>
+                    <p class="text-xl font-light">
+                        {{ weather.humidity }}<span class="text-sm text-slate"
+                            >%</span
+                        >
+                    </p>
+                </div>
+
+                <!-- Wind: speed + compass direction= -->
+                <div class="stat-box px-4 py-5 text-center">
+                    <p
+                        class="font-mono text-xs text-slate uppercase tracking-widest mb-1"
+                    >
+                        Wind
+                    </p>
+                    <p class="text-xl font-light">
+                        {{ weather.wind_speed }}<span
+                            class="text-sm text-slate"
+                        >
+                            km/h</span
+                        >
+                    </p>
+                    <p class="font-mono text-xs text-slate">
+                        {{ weather.wind_dir }}
+                    </p>
+                </div>
+
+                <div class="stat-box px-4 py-5 text-center">
+                    <p
+                        class="font-mono text-xs text-slate uppercase tracking-widest mb-1"
+                    >
+                        UV Index
+                    </p>
+                    <p class="text-xl font-light">{{ weather.uv_index }}</p>
+                </div>
+
+                <div class="stat-box px-4 py-5 text-center">
+                    <p
+                        class="font-mono text-xs text-slate uppercase tracking-widest mb-1"
+                    >
+                        Pressure
+                    </p>
+                    <p class="text-xl font-light">
+                        {{ weather.pressure }}<span class="text-sm text-slate">
+                            hPa</span
+                        >
+                    </p>
+                </div>
+
+                <div class="stat-box px-4 py-5 text-center">
+                    <p
+                        class="font-mono text-xs text-slate uppercase tracking-widest mb-1"
+                    >
+                        Visibility
+                    </p>
+                    <p class="text-xl font-light">
+                        {{ weather.visibility }}<span
+                            class="text-sm text-slate"
+                        >
+                            km</span
+                        >
+                    </p>
+                </div>
+
+                <div class="stat-box px-4 py-5 text-center">
+                    <p
+                        class="font-mono text-xs text-slate uppercase tracking-widest mb-1"
+                    >
+                        Rain
+                    </p>
+                    <p class="text-xl font-light">
+                        {{ weather.precipitation }}<span
+                            class="text-sm text-slate"
+                        >
+                            mm</span
+                        >
+                    </p>
+                </div>
+            </div>
+
+            <!-- Coordinates and observation timestamp -->
+            <div
+                class="bg-mist border border-line px-5 py-3 flex justify-between items-center"
+            >
+                <p class="font-mono text-xs text-slate">
+                    {{ weather.lat }}, {{ weather.lon }}
+                </p>
+                <div class="text-right">
+                    <!-- Timezone identifier, e.g. Europe/Warsaw -->
+                    <p class="font-mono text-xs text-slate">
+                        {{ weather.timezone }}
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Attribution footer -->
+        <footer
+            class="mt-16 text-center animate-fade-in"
+            style="animation-delay: 0.2s"
+        >
+            <p class="font-mono text-xs text-slate/60">
+                Powered by
+                <a
+                    href="https://open-meteo.com/"
+                    class="underline underline-offset-2 hover:text-ink transition-colors"
+                    target="_blank"
+                    >Open-Meteo</a
+                >
+                — free &amp; open-source weather API
+                <br>Ihor Shypilov
+            </p>
+        </footer>
+    </body>
+</html>
